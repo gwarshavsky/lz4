@@ -534,6 +534,7 @@ def _compress_generic(
             else:
                 mp = match_index - start_index
                 if (mp >= 0 and mp + 3 < len(src)
+                        and match_index < current_idx
                         and match_index + LZ4_DISTANCE_MAX >= current_idx
                         and ((dict_issue != _DICT_SMALL) or match_index >= prefix_idx_limit)):
                     if _read32_le(src, mp) == _read32_le(src, ip):
@@ -612,6 +613,7 @@ def _compress_generic(
                 ht[h] = start_index + (ip - 2)
 
             # Prepare next loop
+            ip += 1
             forward_h = _hash_position(src, ip, hash_log)
 
     # Last literals
@@ -695,6 +697,8 @@ def compress(
     ctx = _CompressState()
 
     if max_output_size is not None:
+        if max_output_size < 0:
+            raise LZ4CompressError("max_output_size cannot be negative")
         output_directive = _LIMITED_OUTPUT
         max_out = max_output_size
     else:
